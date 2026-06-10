@@ -4,7 +4,7 @@ description: ${project.description}
 author: Sam Hum
 api-version: '1.21'
 main: edu.whimc.feedback.StudentFeedback
-depend: [WHIMC-Observations, WHIMC-OverworldAgent]
+depend: [WHIMC-Observations, WHIMC-QRF-Agent]
 commands:
   progress:
     description: Gives feedback on student progress during session
