@@ -16,6 +16,7 @@ public class Schema_2 extends SchemaVersion {
                     "  `observation`           DOUBLE                NOT NULL," +
                     "  `science_tools`           DOUBLE                NOT NULL," +
                     "  `exploration`           DOUBLE                NOT NULL," +
+                    "  `poi_exploration`       DOUBLE                NOT NULL DEFAULT 0," +
                     "  `quest`           DOUBLE                NOT NULL," +
                     "  `score`           DOUBLE                NOT NULL," +
                     "  PRIMARY KEY    (`rowid`));";

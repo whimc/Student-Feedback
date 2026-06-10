@@ -53,6 +53,7 @@ public class SchemaManager {
             schema = schema.getNextSchema();
         }
 
+        SchemaRepair.ensureSchema(this.connection, this.plugin.getLogger());
         return true;
     }
 

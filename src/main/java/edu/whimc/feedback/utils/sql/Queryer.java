@@ -13,6 +13,7 @@ import edu.whimc.feedback.utils.Utils;
 import edu.whimc.feedback.utils.sql.MySQLConnection;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 import java.awt.*;
@@ -21,6 +22,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -57,9 +60,9 @@ public class Queryer {
             "SELECT * FROM quests_player_currentquests "+
                     "WHERE uuid=?;";
 
-    //Query for getting NPC/POI waypoints from the database.
+    // Journey stores domain_id (UUID bytes), not a Bukkit world name column.
     private static final String QUERY_GET_WAYPOINTS =
-            "SELECT * FROM journey_waypoints;";
+            "SELECT x, z, domain_id FROM journey_waypoints WHERE player_uuid IS NULL";
 
     //Query for getting time-ordered player positions during session from the database.
     private static final String QUERY_GET_SESSION_TIMED_POSITIONS =
@@ -366,7 +369,7 @@ public class Queryer {
      * @param sessionStart time when the player joined the server
      * @param callback callback to signify process completion, receives Object[]{waypoints, positions}
      */
-    public void getSessionPOIData(Player player, Long sessionStart, Consumer callback){
+    public void getSessionPOIData(Player player, Long sessionStart, Consumer<Object[]> callback){
         HashMap<String, ArrayList<double[]>> waypoints = new HashMap<>();
         HashMap<String, ArrayList<long[]>> positions = new HashMap<>();
         async(() -> {
@@ -374,38 +377,110 @@ public class Queryer {
                 try (PreparedStatement statement = connection.prepareStatement(QUERY_GET_WAYPOINTS)) {
                     ResultSet results = statement.executeQuery();
                     while (results.next()) {
-                        String worldName = results.getString("world");
+                        String worldName = journeyWorldNameForDomainBytes(results.getBytes("domain_id"));
+                        if (worldName == null || worldName.isBlank()) {
+                            worldName = "unknown";
+                        }
                         double x = results.getDouble("x");
                         double z = results.getDouble("z");
-                        if(!waypoints.containsKey(worldName)){
-                            waypoints.put(worldName,new ArrayList<double[]>());
-                        }
-                        waypoints.get(worldName).add(new double[]{x, z});
+                        waypoints.computeIfAbsent(worldName, k -> new ArrayList<>()).add(new double[]{x, z});
                     }
                 } catch (SQLException exc) {
-                    // journey_waypoints table may not exist; POI score will be 0
-                    exc.printStackTrace();
+                    // journey_waypoints table may not exist or layout may differ; POI score will be 0
+                    plugin.getLogger().fine("POI waypoints unavailable: " + exc.getMessage());
                 }
                 try (PreparedStatement statement = connection.prepareStatement(QUERY_GET_SESSION_TIMED_POSITIONS)) {
                     statement.setString(1, player.getUniqueId().toString());
-                    statement.setLong(2, sessionStart/1000);
+                    statement.setLong(2, sessionStart / 1000);
                     ResultSet results = statement.executeQuery();
                     while (results.next()) {
-                        String worldName = results.getString("world");
+                        String worldName = resultSetWorldName(results);
+                        if (worldName == null || worldName.isBlank()) {
+                            continue;
+                        }
                         long time = results.getLong("time");
                         long x = results.getInt("x");
                         long z = results.getInt("z");
-                        if(!positions.containsKey(worldName)){
-                            positions.put(worldName,new ArrayList<long[]>());
-                        }
-                        positions.get(worldName).add(new long[]{time, x, z});
+                        positions.computeIfAbsent(worldName, k -> new ArrayList<>()).add(new long[]{time, x, z});
                     }
+                } catch (SQLException exc) {
+                    plugin.getLogger().warning("Timed session positions unavailable for POI scoring: " + exc.getMessage());
                 }
-                sync(callback, new Object[]{waypoints, positions});
             } catch (SQLException exc) {
-                exc.printStackTrace();
+                plugin.getLogger().warning("POI session data query failed: " + exc.getMessage());
             }
+            sync(callback, new Object[]{waypoints, positions});
         });
+    }
+
+    private static String resultSetWorldName(ResultSet results) throws SQLException {
+        try {
+            return results.getString("world");
+        } catch (SQLException ignored) {
+        }
+        try {
+            return results.getString("world_name");
+        } catch (SQLException ignored) {
+        }
+        return null;
+    }
+
+    private static String journeyWorldNameForDomainBytes(byte[] domainIdBytes) {
+        UUID target = bytesToUuid(domainIdBytes);
+        if (target == null) {
+            return null;
+        }
+        Map<UUID, String> domainToWorld = journeyDomainWorldCache();
+        return domainToWorld.get(target);
+    }
+
+    private static Map<UUID, String> journeyDomainWorldCache() {
+        Map<UUID, String> out = new HashMap<>();
+        if (Bukkit.getPluginManager().getPlugin("Journey") == null) {
+            return out;
+        }
+        try {
+            Class<?> journeyClass = Class.forName("net.whimxiqal.journey.Journey");
+            Object journey = journeyClass.getMethod("get").invoke(null);
+            if (journey == null) {
+                return out;
+            }
+            Object domainManager = journey.getClass().getMethod("domainManager").invoke(journey);
+            Class<?> providerCl = Class.forName("net.whimxiqal.journey.bukkit.JourneyBukkitApiProvider");
+            Object api = providerCl.getMethod("get").invoke(null);
+            if (domainManager == null || api == null) {
+                return out;
+            }
+            var toDomain = api.getClass().getMethod("toDomain", World.class);
+            var domainId = domainManager.getClass().getMethod("domainId", int.class);
+            for (World world : Bukkit.getWorlds()) {
+                Object index = toDomain.invoke(api, world);
+                if (!(index instanceof Number)) {
+                    continue;
+                }
+                Object id = domainId.invoke(domainManager, ((Number) index).intValue());
+                if (id instanceof UUID uuid) {
+                    out.put(uuid, world.getName());
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return out;
+    }
+
+    private static UUID bytesToUuid(byte[] bytes) {
+        if (bytes == null || bytes.length != 16) {
+            return null;
+        }
+        long msb = 0;
+        long lsb = 0;
+        for (int i = 0; i < 8; i++) {
+            msb = (msb << 8) | (bytes[i] & 0xffL);
+        }
+        for (int i = 8; i < 16; i++) {
+            lsb = (lsb << 8) | (bytes[i] & 0xffL);
+        }
+        return new UUID(msb, lsb);
     }
 
     /**
