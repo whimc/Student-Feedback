@@ -8,6 +8,20 @@ mysql:
 database: true
 agent-worlds: None
 
+# Distance in blocks a player must be within of a journey_waypoints POI/NPC to count as "near" it
+poi-radius: 5
+
+# Raw value in each category worth a full 100 points. Each category score is capped at 100
+# and the overall score is the average of the five category scores, so all categories
+# carry equal weight regardless of their natural scale.
+score-maximums:
+  observation-count: 10
+  observation-words: 150
+  science-tools: 10
+  exploration: 100
+  poi-exploration: 5
+  quests: 5
+
 worlds:
   NoMoon:
     display_name: No Moon

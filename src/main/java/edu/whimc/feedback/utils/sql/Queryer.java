@@ -2,11 +2,17 @@ package edu.whimc.feedback.utils.sql;
 
 import edu.whimc.feedback.StudentFeedback;
 
+import edu.whimc.feedback.assessments.ExplorationAssessment;
+import edu.whimc.feedback.assessments.ObservationAssessment;
 import edu.whimc.feedback.assessments.OverallAssessment;
+import edu.whimc.feedback.assessments.POIExplorationAssessment;
+import edu.whimc.feedback.assessments.QuestAssessment;
+import edu.whimc.feedback.assessments.ScienceToolsAssessment;
 import edu.whimc.feedback.bkt.Skills;
 import edu.whimc.feedback.utils.Utils;
 import edu.whimc.feedback.utils.sql.MySQLConnection;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 import java.awt.*;
@@ -41,10 +47,24 @@ public class Queryer {
             "SELECT * FROM whimc_skills "+
             "WHERE uuid=?;";
 
-    //Query for getting observation use during session from the database.
+    //Query for getting completed quests from the database.
     private static final String QUERY_GET_QUESTS =
             "SELECT * FROM quests_player_completedquests "+
                     "WHERE uuid=?;";
+
+    //Query for getting started (in-progress) quests from the database.
+    private static final String QUERY_GET_STARTED_QUESTS =
+            "SELECT * FROM quests_player_currentquests "+
+                    "WHERE uuid=?;";
+
+    //Query for getting NPC/POI waypoints from the database.
+    private static final String QUERY_GET_WAYPOINTS =
+            "SELECT * FROM journey_waypoints;";
+
+    //Query for getting time-ordered player positions during session from the database.
+    private static final String QUERY_GET_SESSION_TIMED_POSITIONS =
+            "SELECT * FROM whimc_player_positions "+
+                    "WHERE uuid=? AND time > ? ORDER BY time ASC;";
 
     //Query for getting science tool use during session from the database.
     private static final String QUERY_GET_SESSION_TOOLS =
@@ -66,8 +86,8 @@ public class Queryer {
      */
     private static final String QUERY_SAVE_PROGRESS =
             "INSERT INTO whimc_progress " +
-                    "(uuid, username, time, observation, science_tools, exploration, quest, score) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                    "(uuid, username, time, observation, science_tools, exploration, poi_exploration, quest, score) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     /**
      * Query for inserting a progress entry into the database.
@@ -213,23 +233,33 @@ public class Queryer {
     }
 
     /**
-     * Method to get skills for a player
-     * @param player Player to get the skills for
+     * Method to get quests started and completed by a player
+     * @param player Player to get the quests for
      * @param callback callback to signify process completion
      */
-    public void getQuestsCompleted(Player player, Consumer callback){
+    public void getQuests(Player player, Consumer callback){
         async(() -> {
-            ArrayList<String> questsCompleted = new ArrayList<>();
+            ArrayList<String> quests = new ArrayList<>();
             try (Connection connection = this.sqlConnection.getConnection()) {
                 try (PreparedStatement statement = connection.prepareStatement(QUERY_GET_QUESTS)) {
                     statement.setString(1, player.getUniqueId().toString());
                     ResultSet results = statement.executeQuery();
                     while (results.next()) {
-                        String quest = results.getString("questid");
-                        questsCompleted.add(quest);
+                        quests.add(results.getString("questid"));
                     }
-                    sync(callback,questsCompleted);
+                } catch (SQLException exc) {
+                    exc.printStackTrace();
                 }
+                try (PreparedStatement statement = connection.prepareStatement(QUERY_GET_STARTED_QUESTS)) {
+                    statement.setString(1, player.getUniqueId().toString());
+                    ResultSet results = statement.executeQuery();
+                    while (results.next()) {
+                        quests.add(results.getString("questid"));
+                    }
+                } catch (SQLException exc) {
+                    exc.printStackTrace();
+                }
+                sync(callback,quests);
             } catch (SQLException exc) {
                 exc.printStackTrace();
             }
@@ -266,8 +296,8 @@ public class Queryer {
     }
 
     /**
-     * Method to get skills for a player
-     * @param player Player to get the skills for
+     * Method to get observation texts made by a player during the session (color codes stripped)
+     * @param player Player to get the observations for
      * @param callback callback to signify process completion
      */
     public void getSessionObservations(Player player, Long sessionStart, Consumer callback){
@@ -280,11 +310,15 @@ public class Queryer {
                     ResultSet results = statement.executeQuery();
                     while (results.next()) {
                         String worldName = results.getString("world");
-                        String category = results.getString("category");
+                        String text = results.getString("observation_color_stripped");
+                        if (text == null || text.isEmpty()) {
+                            text = results.getString("observation");
+                            text = text == null ? "" : ChatColor.stripColor(Utils.color(text));
+                        }
                         if(!observations.containsKey(worldName)){
                             observations.put(worldName,new ArrayList<String>());
                         }
-                        observations.get(worldName).add(category);
+                        observations.get(worldName).add(text);
                     }
                     sync(callback,observations);
                 }
@@ -326,6 +360,80 @@ public class Queryer {
     }
 
     /**
+     * Method to get the data needed for the POI exploration assessment: all NPC/POI waypoints
+     * and the player's time-ordered positions during the session
+     * @param player Player to get the positions for
+     * @param sessionStart time when the player joined the server
+     * @param callback callback to signify process completion, receives Object[]{waypoints, positions}
+     */
+    public void getSessionPOIData(Player player, Long sessionStart, Consumer callback){
+        HashMap<String, ArrayList<double[]>> waypoints = new HashMap<>();
+        HashMap<String, ArrayList<long[]>> positions = new HashMap<>();
+        async(() -> {
+            try (Connection connection = this.sqlConnection.getConnection()) {
+                try (PreparedStatement statement = connection.prepareStatement(QUERY_GET_WAYPOINTS)) {
+                    ResultSet results = statement.executeQuery();
+                    while (results.next()) {
+                        String worldName = results.getString("world");
+                        double x = results.getDouble("x");
+                        double z = results.getDouble("z");
+                        if(!waypoints.containsKey(worldName)){
+                            waypoints.put(worldName,new ArrayList<double[]>());
+                        }
+                        waypoints.get(worldName).add(new double[]{x, z});
+                    }
+                } catch (SQLException exc) {
+                    // journey_waypoints table may not exist; POI score will be 0
+                    exc.printStackTrace();
+                }
+                try (PreparedStatement statement = connection.prepareStatement(QUERY_GET_SESSION_TIMED_POSITIONS)) {
+                    statement.setString(1, player.getUniqueId().toString());
+                    statement.setLong(2, sessionStart/1000);
+                    ResultSet results = statement.executeQuery();
+                    while (results.next()) {
+                        String worldName = results.getString("world");
+                        long time = results.getLong("time");
+                        long x = results.getInt("x");
+                        long z = results.getInt("z");
+                        if(!positions.containsKey(worldName)){
+                            positions.put(worldName,new ArrayList<long[]>());
+                        }
+                        positions.get(worldName).add(new long[]{time, x, z});
+                    }
+                }
+                sync(callback, new Object[]{waypoints, positions});
+            } catch (SQLException exc) {
+                exc.printStackTrace();
+            }
+        });
+    }
+
+    /**
+     * Method to build the full OverallAssessment for a player's session by chaining all queries
+     * @param player Player to assess
+     * @param sessionStart time when the player joined the server
+     * @param callback callback receiving the OverallAssessment
+     */
+    public void getOverallAssessment(Player player, Long sessionStart, Consumer<OverallAssessment> callback){
+        getSessionObservations(player, sessionStart, observations -> {
+            ObservationAssessment obs = new ObservationAssessment(player, sessionStart, observations, plugin);
+            getSessionScienceTools(player, sessionStart, scienceTools -> {
+                ScienceToolsAssessment sci = new ScienceToolsAssessment(player, sessionStart, scienceTools, plugin);
+                getSessionPositions(player, sessionStart, positions -> {
+                    ExplorationAssessment exp = new ExplorationAssessment(player, sessionStart, positions, plugin);
+                    getSessionPOIData(player, sessionStart, poiData -> {
+                        POIExplorationAssessment poi = new POIExplorationAssessment(player, sessionStart, poiData, plugin);
+                        getQuests(player, quests -> {
+                            QuestAssessment quest = new QuestAssessment(player, sessionStart, quests, plugin);
+                            callback.accept(new OverallAssessment(player, sessionStart, null, obs, sci, exp, poi, quest, plugin));
+                        });
+                    });
+                });
+            });
+        });
+    }
+
+    /**
      * Generated a PreparedStatement for saving a new progress session.
      *
      * @param connection MySQL Connection
@@ -343,8 +451,9 @@ public class Queryer {
         statement.setDouble(4, assessment.getObservationAssessment().metric());
         statement.setDouble(5, assessment.getScienceToolAssessment().metric());
         statement.setDouble(6, assessment.getExplorationAssessment().metric());
-        statement.setDouble(7, assessment.getQuestAssessment().metric());
-        statement.setDouble(8, assessment.metric());
+        statement.setDouble(7, assessment.getPOIExplorationAssessment().metric());
+        statement.setDouble(8, assessment.getQuestAssessment().metric());
+        statement.setDouble(9, assessment.metric());
         return statement;
     }
 

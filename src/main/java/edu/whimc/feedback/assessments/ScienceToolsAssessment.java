@@ -1,5 +1,6 @@
 package edu.whimc.feedback.assessments;
 
+import edu.whimc.feedback.StudentFeedback;
 import org.bukkit.entity.Player;
 
 
@@ -9,12 +10,12 @@ import java.util.*;
  * Class to define science tool assessment
  */
 public class ScienceToolsAssessment extends ProgressAssessment{
-    public ScienceToolsAssessment(Player player, Long sessionStart,Object resultSet) {
-        super(player, sessionStart, resultSet);
+    public ScienceToolsAssessment(Player player, Long sessionStart, Object resultSet, StudentFeedback plugin) {
+        super(player, sessionStart, resultSet, plugin);
     }
 
     /**
-     * Returns number of unique science tools used during the session
+     * Returns a 0-100 score based on the number of unique science tools used per world during the session
      * @return science tools metric
      */
     @Override
@@ -26,7 +27,7 @@ public class ScienceToolsAssessment extends ProgressAssessment{
                 score++;
             }
         }
-        return score;
+        return normalize(score, "science-tools");
     }
 
     /**

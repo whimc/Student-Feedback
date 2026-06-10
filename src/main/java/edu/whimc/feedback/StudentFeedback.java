@@ -101,31 +101,23 @@ public class StudentFeedback extends JavaPlugin implements Listener {
      * When players leave their progress is saved to db and they are removed from sessions
      * @param event PlayerQuitEvent
      */
-    /**
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event){
         Player player = event.getPlayer();
         Long sessionStart = sessions.get(player);
+        if(sessionStart == null){
+            return;
+        }
         if(database) {
-            queryer.getSessionObservations(player, sessionStart, observations -> {
-                ObservationAssessment obs = new ObservationAssessment(player, sessionStart, observations);
-                queryer.getSessionScienceTools(player, sessionStart, scienceTools -> {
-                    ScienceToolsAssessment sci = new ScienceToolsAssessment(player, sessionStart, scienceTools);
-                    queryer.getSessionPositions(player, sessionStart, positions -> {
-                        ExplorationAssessment exp = new ExplorationAssessment(player, sessionStart, positions, this);
-                        queryer.getQuestsCompleted(player, completedQuests -> {
-                            QuestAssessment quest = new QuestAssessment(player, sessionStart, completedQuests);
-                            OverallAssessment assessment = new OverallAssessment(player, sessionStart, null, obs, sci, exp, quest);
-                            queryer.storeNewProgress(assessment, rowID -> {
-                                sessions.remove(event.getPlayer());
-                            });
-                        });
-                    });
+            queryer.getOverallAssessment(player, sessionStart, assessment -> {
+                queryer.storeNewProgress(assessment, rowID -> {
+                    sessions.remove(player);
                 });
             });
+        } else {
+            sessions.remove(player);
         }
     }
-*/
     @EventHandler
     public void onObservation(ObserveEvent observationEvent){
         Player player = observationEvent.getPlayer();

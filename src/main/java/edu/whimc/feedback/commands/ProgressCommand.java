@@ -57,19 +57,8 @@ public class ProgressCommand implements CommandExecutor, TabCompleter {
         }
         if(plugin.getDatabase()) {
             this.plugin.getQueryer().storeNewProgressCommand(player, COMMAND, id -> {
-                plugin.getQueryer().getSessionObservations(player, sessionStart, observations -> {
-                    ObservationAssessment obs = new ObservationAssessment(player, sessionStart, observations);
-                    plugin.getQueryer().getSessionScienceTools(player, sessionStart, scienceTools -> {
-                        ScienceToolsAssessment sci = new ScienceToolsAssessment(player, sessionStart, scienceTools);
-                        plugin.getQueryer().getSessionPositions(player, sessionStart, positions -> {
-                            ExplorationAssessment exp = new ExplorationAssessment(player, sessionStart, positions, plugin);
-                            plugin.getQueryer().getQuestsCompleted(player, completedQuests -> {
-                                QuestAssessment quest = new QuestAssessment(player, sessionStart, completedQuests);
-                                OverallAssessment assessment = new OverallAssessment(player, sessionStart, null, obs, sci, exp, quest);
-                                Utils.sendProgressFeedback(assessment);
-                            });
-                        });
-                    });
+                plugin.getQueryer().getOverallAssessment(player, sessionStart, assessment -> {
+                    Utils.sendProgressFeedback(assessment);
                 });
             });
         }

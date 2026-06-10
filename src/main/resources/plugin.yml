@@ -2,9 +2,8 @@ name: ${project.artifactId}
 version: ${project.version}
 description: ${project.description}
 author: Sam Hum
-api-version: 1.13
+api-version: '1.21'
 main: edu.whimc.feedback.StudentFeedback
-softdepend: [ProtocolLib]
 depend: [WHIMC-Observations, WHIMC-OverworldAgent]
 commands:
   progress:

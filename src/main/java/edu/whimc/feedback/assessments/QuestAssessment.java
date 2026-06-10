@@ -1,28 +1,27 @@
 package edu.whimc.feedback.assessments;
 
+import edu.whimc.feedback.StudentFeedback;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 
 /**
  * Class to define quest assessment
  */
 public class QuestAssessment extends ProgressAssessment{
-    public QuestAssessment(Player player, Long sessionStart,Object resultSet) {
-        super(player, sessionStart, resultSet);
+    public QuestAssessment(Player player, Long sessionStart, Object resultSet, StudentFeedback plugin) {
+        super(player, sessionStart, resultSet, plugin);
     }
 
     /**
-     * Returns quest metric (currently undefined)
+     * Returns a 0-100 score based on the number of quests started plus quests completed
      * @return quest metric
      */
     @Override
     public double metric() {
-        ArrayList<String> completedQuests = (ArrayList<String>) this.getResultSet();
-        if(completedQuests != null) {
-            return completedQuests.size();
+        ArrayList<String> quests = (ArrayList<String>) this.getResultSet();
+        if(quests != null) {
+            return normalize(quests.size(), "quests");
         }
         return 0;
     }

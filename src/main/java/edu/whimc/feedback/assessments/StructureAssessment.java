@@ -3,8 +3,6 @@ package edu.whimc.feedback.assessments;
 import org.bukkit.Bukkit;
 import org.pmml4s.model.Model;
 
-import java.io.File;
-
 /**
  * Class to assess observation structure with an ML pipeline
  */
@@ -31,7 +29,7 @@ public class StructureAssessment {
         String[]input = {this.observation};
         Model model = null;
         try {
-            model = Model.fromInputStream(this.getClass().getResourceAsStream(File.separator+"model.pmml"));
+            model = Model.fromInputStream(this.getClass().getResourceAsStream("/model.pmml"));
         } catch (Exception e) {
             e.printStackTrace();
         }

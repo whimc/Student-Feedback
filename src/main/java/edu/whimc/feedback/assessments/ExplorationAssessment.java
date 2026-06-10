@@ -7,7 +7,6 @@ import org.bukkit.entity.Player;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.util.*;
 
 
@@ -15,7 +14,6 @@ import java.util.*;
  * Class to define exploration assessment (copied from Path-Generator)
  */
 public class ExplorationAssessment extends ProgressAssessment{
-    private StudentFeedback plugin;
 
     /**
      * Constructor to set instance variables in super class and get plugin
@@ -25,12 +23,12 @@ public class ExplorationAssessment extends ProgressAssessment{
      * @param plugin the StudentFeedback plugin to access the config
      */
     public ExplorationAssessment(Player player, Long sessionStart, Object resultSet, StudentFeedback plugin) {
-        super(player, sessionStart, resultSet);
-        this.plugin = plugin;
+        super(player, sessionStart, resultSet, plugin);
     }
 
     /**
-     * Method to return the exploration assessment based on separating maps into a 10x10 grid and measuring the number of grid positions visited
+     * Method to return the exploration assessment based on separating maps into a 10x10 grid and measuring the number of grid positions visited,
+     * normalized to a 0-100 score
      * @return exploration metric
      */
     @Override
@@ -40,14 +38,14 @@ public class ExplorationAssessment extends ProgressAssessment{
         for (Map.Entry<String, ArrayList<Point>> entry : positions.entrySet()) {
             String world = entry.getKey();
             ArrayList<Point> points = entry.getValue();
-            int pixelRatio = plugin.getConfig().getInt("worlds." + world + ".pixel_to_block_ratio");
-            int min_x = plugin.getConfig().getInt("worlds." + world + ".top_left_coordinate_x");
-            int min_z = plugin.getConfig().getInt("worlds." + world + ".top_left_coordinate_z");
+            int pixelRatio = getPlugin().getConfig().getInt("worlds." + world + ".pixel_to_block_ratio");
+            int min_x = getPlugin().getConfig().getInt("worlds." + world + ".top_left_coordinate_x");
+            int min_z = getPlugin().getConfig().getInt("worlds." + world + ".top_left_coordinate_z");
             BufferedImage img = null;
             int max_x = 0;
             int max_z = 0;
             try {
-                img = ImageIO.read(this.getClass().getResource(File.separator + "maps" + File.separator + world + ".png"));
+                img = ImageIO.read(this.getClass().getResource("/maps/" + world + ".png"));
                 max_x = min_x + img.getWidth() / pixelRatio;
                 max_z = min_z + img.getHeight() / pixelRatio;
             } catch (Exception e) {
@@ -56,7 +54,7 @@ public class ExplorationAssessment extends ProgressAssessment{
             int[][] mapMatrices = new int[10][10];
             for (int k = 0; k < points.size(); k++) {
                 double x = points.get(k).getX();
-                double z = points.get(k).getX();
+                double z = points.get(k).getY();
                 if (!is_inside_view(min_x, min_z, max_x, max_z, x, z)) {
                     continue;
                 }
@@ -72,7 +70,7 @@ public class ExplorationAssessment extends ProgressAssessment{
                 }
             }
         }
-            return score;
+            return normalize(score, "exploration");
         }
 
     /**

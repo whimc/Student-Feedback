@@ -222,15 +222,18 @@ public class Utils {
      */
     public static void sendProgressFeedback(OverallAssessment assessment){
         Player player = assessment.getPlayer();
+        NumberFormat scoreFormat = new DecimalFormat("#0.0");
         HashMap<String, Double> metrics = new HashMap<String, Double>();
         ObservationAssessment obs = assessment.getObservationAssessment();
         ScienceToolsAssessment sci = assessment.getScienceToolAssessment();
         ExplorationAssessment exp = assessment.getExplorationAssessment();
+        POIExplorationAssessment poi = assessment.getPOIExplorationAssessment();
         QuestAssessment quest = assessment.getQuestAssessment();
 
         metrics.put(obs.getName(), obs.metric());
         metrics.put(sci.getName(), sci.metric());
         metrics.put(exp.getName(), exp.metric());
+        metrics.put(poi.getName(), poi.metric());
         metrics.put(quest.getName(), quest.metric());
 
 
@@ -246,9 +249,9 @@ public class Utils {
         }
         player.sendMessage("Here is your progress for this session");
         for(Map.Entry<String, Double> entry : metrics.entrySet()) {
-            player.sendMessage(entry.getKey()+": "+entry.getValue());
+            player.sendMessage(entry.getKey()+": "+scoreFormat.format(entry.getValue()));
         }
-        player.sendMessage(assessment.getName()+": "+assessment.metric()+"\n"+
+        player.sendMessage(assessment.getName()+": "+scoreFormat.format(assessment.metric())+"\n"+
                 "Good work so far! You should try increasing your "+minMetric+" score!");
     }
 
@@ -258,10 +261,11 @@ public class Utils {
      * @param scores the scores of the players on the server
      */
     public static void sendLeaderboardFeedback(Player sender, ArrayList<OverallAssessment> scores){
+        NumberFormat scoreFormat = new DecimalFormat("#0.0");
         sender.sendMessage("LEADERBOARD");
         for(int k = 0; k < scores.size(); k++){
             int position = k+1;
-            sender.sendMessage(position+")   "+ scores.get(k).getPlayer().getName()+": "+scores.get(k).metric());
+            sender.sendMessage(position+")   "+ scores.get(k).getPlayer().getName()+": "+scoreFormat.format(scores.get(k).metric()));
         }
     }
 

@@ -7,7 +7,7 @@
     <!-- Group-ID, artifact ID and version of the project. You can modify these as you want -->
     <groupId>edu.whimc</groupId>
     <artifactId>WHIMC-StudentFeedback</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <name>WHIMC Student Feedback</name>
     <description>Gives feedback based on student in-game actions</description>
 
@@ -15,17 +15,7 @@
         <!-- This adds the Spigot Maven repository to the build -->
         <repository>
             <id>spigot-repo</id>
-            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
-        </repository>
-        <!-- Maven repo for Holographic Displays -->
-        <repository>
-            <id>codemc-repo</id>
-            <url>https://repo.codemc.io/repository/maven-public/</url>
-        </repository>
-        <!-- Maven repo for ProtocolLib -->
-        <repository>
-            <id>dmulloy2-repo</id>
-            <url>https://repo.dmulloy2.net/repository/public/</url>
+            <url>https://hub.spigotmc.org/nexus/content/groups/public/</url>
         </repository>
     </repositories>
 
@@ -34,14 +24,7 @@
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.14.4-R0.1-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- Add HolographicDisplays to the build -->
-        <dependency>
-            <groupId>com.gmail.filoghost.holographicdisplays</groupId>
-            <artifactId>holographicdisplays-api</artifactId>
-            <version>2.4.0</version>
+            <version>1.21.11-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -49,26 +32,19 @@
             <artifactId>pmml4s_2.13</artifactId>
             <version>0.9.14</version>
         </dependency>
-        <!-- Add ProtocolLib to the build-->
-        <dependency>
-            <groupId>com.comphenix.protocol</groupId>
-            <artifactId>ProtocolLib</artifactId>
-            <version>4.7.0</version>
-            <scope>provided</scope>
-        </dependency>
 
         <dependency>
-            <artifactId>edu.whimc</artifactId>
-            <groupId>WHIMC-Observations</groupId>
+            <groupId>edu.whimc</groupId>
+            <artifactId>WHIMC-Observations</artifactId>
             <scope>system</scope>
-            <version>2.5.0</version>
-            <systemPath>${basedir}/lib/WHIMC-Observations-2.5.0.jar</systemPath>
+            <version>2.7.0</version>
+            <systemPath>${basedir}/lib/WHIMC-Observations-2.7.0.jar</systemPath>
         </dependency>
     </dependencies>
 
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <!-- Spigot 1.20.5+ requires Java 21 -->
+        <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <build>
@@ -83,25 +59,18 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.7.0</version>
+                <version>3.13.0</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <release>21</release>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.2.4</version>
+                <version>3.6.0</version>
                 <configuration>
                     <createDependencyReducedPom>false</createDependencyReducedPom>
                     <minimizeJar>false</minimizeJar>
-                    <relocations>
-                        <relocation>
-                            <pattern>com.comphenix.packetwrapper</pattern>
-                            <shadedPattern>net.novucs.dlac.shaded.packetwrapper</shadedPattern>
-                        </relocation>
-                    </relocations>
                 </configuration>
                 <executions>
                     <execution>
