@@ -7,7 +7,7 @@
     <!-- Group-ID, artifact ID and version of the project. You can modify these as you want -->
     <groupId>edu.whimc</groupId>
     <artifactId>WHIMC-StudentFeedback</artifactId>
-    <version>1.1.3</version>
+    <version>1.1.4</version>
     <name>WHIMC Student Feedback</name>
     <description>Gives feedback based on student in-game actions</description>
 
