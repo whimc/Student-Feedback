@@ -137,8 +137,170 @@ observation-quality:
     - " vs "
 
 worlds:
+  RocketLaunch:
+    display_name: Rocket Launch
+    pixel_to_block_ratio: 4
+    top_left_coordinate_x: -1731
+    top_left_coordinate_z: 2638
+
+  LunarCrater:
+    display_name: Lunar Crater
+    pixel_to_block_ratio: 4
+    top_left_coordinate_x: -222
+    top_left_coordinate_z: -160
+
+  Hub:
+    display_name: Space Station
+    pixel_to_block_ratio: 4
+    top_left_coordinate_x: -155
+    top_left_coordinate_z: 10
+
+  EarthControl:
+    display_name: Earth Control
+    pixel_to_block_ratio: 1
+    top_left_coordinate_x: -251
+    top_left_coordinate_z: -275
+
   NoMoon:
     display_name: No Moon
     pixel_to_block_ratio: 2
     top_left_coordinate_x: -325
     top_left_coordinate_z: -304
+
+  ColderStrip:
+    display_name: Colder Sun (Habitable Strip)
+    pixel_to_block_ratio: 2
+    top_left_coordinate_x: -227
+    top_left_coordinate_z: -256
+
+  ColderCold:
+    display_name: Colder Sun (Cold)
+    pixel_to_block_ratio: 4
+    top_left_coordinate_x: -219
+    top_left_coordinate_z: -137
+
+  ColderHot:
+    display_name: Colder Sun (Hot)
+    pixel_to_block_ratio: 4
+    top_left_coordinate_x: -302
+    top_left_coordinate_z: -215
+
+  TiltedFrozen:
+    display_name: Tilted Earth (Frozen)
+    pixel_to_block_ratio: 2
+    top_left_coordinate_x: -730
+    top_left_coordinate_z: -880
+
+  TiltedWarm:
+    display_name: Tilted Earth (Warm)
+    pixel_to_block_ratio: 2
+    top_left_coordinate_x: -730
+    top_left_coordinate_z: -880
+
+  TiltedMelting:
+    display_name: Tilted Earth (Melting)
+    pixel_to_block_ratio: 2
+    top_left_coordinate_x: -730
+    top_left_coordinate_z: -880
+
+  MynoaClose:
+    display_name: Mynoa (Close)
+    pixel_to_block_ratio: 4
+    top_left_coordinate_x: 1218
+    top_left_coordinate_z: 786
+
+  MynoaHalf:
+    display_name: Mynoa (Half)
+    pixel_to_block_ratio: 4
+    top_left_coordinate_x: -128
+    top_left_coordinate_z: 44
+
+  MynoaMangrove:
+    display_name: Mynoa (Mangrove)
+    pixel_to_block_ratio: 4
+    top_left_coordinate_x: 87
+    top_left_coordinate_z: -75
+
+  Cancri:
+    display_name: Cancri
+    pixel_to_block_ratio: 4
+    top_left_coordinate_x: -21
+    top_left_coordinate_z: -28
+
+  CancriCold:
+    display_name: Cancri Cold
+    pixel_to_block_ratio: 4
+    top_left_coordinate_x: -100
+    top_left_coordinate_z: -100
+
+  Gliese:
+    display_name: Gliese
+    pixel_to_block_ratio: 1
+    top_left_coordinate_x: -314
+    top_left_coordinate_z: -257
+
+  Trappist:
+    display_name: Trappist
+    pixel_to_block_ratio: 2
+    top_left_coordinate_x: -250
+    top_left_coordinate_z: -216
+
+  Kepler:
+    display_name: Kepler
+    pixel_to_block_ratio: 2
+    top_left_coordinate_x: -512
+    top_left_coordinate_z: -512
+
+  BrownDwarf:
+    display_name: Brown Dwarf
+    pixel_to_block_ratio: 2
+    top_left_coordinate_x: -301
+    top_left_coordinate_z: -283
+
+  TwoMoons:
+    display_name: Two Moons
+    pixel_to_block_ratio: 4
+    top_left_coordinate_x: -70
+    top_left_coordinate_z: -50
+
+  TwoMoonsLluna:
+    display_name: Two Moons (Lluna)
+    pixel_to_block_ratio: 4
+    top_left_coordinate_x: -100
+    top_left_coordinate_z: -80
+
+  TwoMoonsLow:
+    display_name: Two Moons (Low)
+    pixel_to_block_ratio: 4
+    top_left_coordinate_x: -70
+    top_left_coordinate_z: -50
+
+  BlackHole:
+    display_name: Black Hole
+    pixel_to_block_ratio: 2
+    top_left_coordinate_x: -280
+    top_left_coordinate_z: -90
+
+  ETLife:
+    display_name: ET Life
+    pixel_to_block_ratio: 2
+    top_left_coordinate_x: -49
+    top_left_coordinate_z: -49
+
+  Galaxy:
+    display_name: Galaxy
+    pixel_to_block_ratio: 2
+    top_left_coordinate_x: -270
+    top_left_coordinate_z: -300
+
+  NeutronStar:
+    display_name: Neutron Star
+    pixel_to_block_ratio: 4
+    top_left_coordinate_x: -110
+    top_left_coordinate_z: -110
+
+  Quasar:
+    display_name: Quasar
+    pixel_to_block_ratio: 1
+    top_left_coordinate_x: -340
+    top_left_coordinate_z: -410
