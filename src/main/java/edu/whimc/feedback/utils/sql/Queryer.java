@@ -275,7 +275,7 @@ public class Queryer {
      * @param callback callback to signify process completion
      */
     public void getSessionScienceTools(Player player, Long sessionStart, Consumer callback){
-        HashMap<String,HashSet<String>> tools = new HashMap<>();
+        HashMap<String, HashMap<String, Integer>> tools = new HashMap<>();
         async(() -> {
             try (Connection connection = this.sqlConnection.getConnection()) {
                 try (PreparedStatement statement = connection.prepareStatement(QUERY_GET_SESSION_TOOLS)) {
@@ -285,10 +285,8 @@ public class Queryer {
                     while (results.next()) {
                         String worldName = results.getString("world");
                         String sciTool = results.getString("tool");
-                        if(!tools.containsKey(worldName)){
-                            tools.put(worldName,new HashSet<String>());
-                        }
-                        tools.get(worldName).add(sciTool);
+                        tools.computeIfAbsent(worldName, k -> new HashMap<>())
+                                .merge(sciTool, 1, Integer::sum);
                     }
                     sync(callback,tools);
                 }

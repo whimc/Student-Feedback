@@ -17,10 +17,124 @@ poi-radius: 5
 score-maximums:
   observation-count: 10
   observation-words: 150
-  science-tools: 10
+  observation-quality: 40
+  science-tools: 15
   exploration: 100
   poi-exploration: 5
   quests: 5
+
+# First use of a tool per world earns unique-tool-points; each extra use of the same
+# tool adds repeat-use-points, up to repeat-use-cap-per-tool times per tool.
+science-tools:
+  unique-tool-points: 1.0
+  repeat-use-points: 0.25
+  repeat-use-cap-per-tool: 4
+
+# Heuristic bonuses for scientific observation quality (no LLM required).
+# Measurement units are auto-loaded from plugins/WHIMC-ScienceTools/config.yml when present.
+observation-quality:
+  question-mark-bonus: 2
+  decimal-number-bonus: 2
+  measurement-unit-bonus: 2
+  percent-bonus: 1
+  comparison-word-bonus: 1
+  causal-word-bonus: 1
+  scientific-term-bonus: 1
+  multiple-numbers-bonus: 1
+  detail-length-bonus: 1
+  min-length-for-detail-bonus: 40
+  science-tool-name-bonus: 2
+  multi-world-bonus: 2
+  multi-world-min-worlds: 2
+  number-unit-sentence-bonus: 2
+  cross-measurement-bonus: 2
+  short-observation-penalty: -2
+  min-length-before-penalty: 15
+  min-words-before-penalty: 3
+  duplicate-observation-penalty: -2
+  unit-cache-refresh-ms: 300000
+  extra-units:
+    - "°c"
+    - "°f"
+    - "°k"
+    - "celsius"
+    - "fahrenheit"
+    - "kelvin"
+    - "m/s"
+    - "m/s^2"
+    - "mev"
+    - "msv"
+    - "hpa"
+    - "psi"
+    - "bar"
+    - "percent"
+    - "%"
+  comparison-words:
+    - "compared to"
+    - "compared with"
+    - "more than"
+    - "less than"
+    - "higher than"
+    - "lower than"
+    - "similar to"
+    - "different from"
+    - "versus"
+    - " vs "
+    - "increase"
+    - "decrease"
+  causal-words:
+    - "because"
+    - "therefore"
+    - "causes"
+    - "caused by"
+    - "leads to"
+    - "results in"
+    - "due to"
+    - "if "
+    - "then "
+    - "might"
+    - "could"
+    - "predict"
+  scientific-terms:
+    - "atmosphere"
+    - "gravity"
+    - "temperature"
+    - "pressure"
+    - "radiation"
+    - "humidity"
+    - "oxygen"
+    - "orbit"
+    - "hypothesis"
+    - "evidence"
+    - "measurement"
+    - "data"
+    - "ratio"
+    - "composition"
+    - "density"
+    - "magnetic"
+    - "tidal"
+    - "rotation"
+  measurement-concepts:
+    - "temperature"
+    - "pressure"
+    - "gravity"
+    - "humidity"
+    - "oxygen"
+    - "radiation"
+    - "altitude"
+    - "airflow"
+    - "atmosphere"
+    - "magnetic"
+    - "tidal"
+  cross-reference-words:
+    - " while "
+    - " whereas "
+    - " compared to "
+    - " compared with "
+    - " and "
+    - " but "
+    - " versus "
+    - " vs "
 
 worlds:
   NoMoon:

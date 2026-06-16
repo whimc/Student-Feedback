@@ -1,9 +1,12 @@
 package edu.whimc.feedback.assessments;
 
 import edu.whimc.feedback.StudentFeedback;
+import edu.whimc.feedback.utils.ObservationQualityScorer;
 import org.bukkit.entity.Player;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Class to define observation assessment
@@ -22,8 +25,8 @@ public class ObservationAssessment extends ProgressAssessment{
     }
 
     /**
-     * Returns a 0-100 score combining the number of observations and the total
-     * word count of those observations during the session (each weighted equally)
+     * Returns a 0-100 score combining observation count, word count, and scientific
+     * quality heuristics (questions, decimals, units, comparison/causal language).
      * @return observation metric
      */
     @Override
@@ -40,7 +43,14 @@ public class ObservationAssessment extends ProgressAssessment{
                 }
             }
         }
-        return (normalize(count, "observation-count") + normalize(words, "observation-words")) / 2.0;
+
+        ObservationQualityScorer qualityScorer = new ObservationQualityScorer(getPlugin());
+        double quality = qualityScorer.scoreSession(observations);
+
+        double countScore = normalize(count, "observation-count");
+        double wordsScore = normalize(words, "observation-words");
+        double qualityScore = normalize(quality, "observation-quality");
+        return (countScore + wordsScore + qualityScore) / 3.0;
     }
 
 

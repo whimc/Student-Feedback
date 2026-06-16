@@ -27,8 +27,8 @@ These five measures are computed on demand (when `/progress` or `/leaderboard` i
 
 | Measure | Raw value | Details |
 |---|---|---|
-| **Observation Assessment** | Number of observations *and* total word count this session | Two equally weighted halves: the observation count (normalized against `score-maximums.observation-count`) and the total words written across all observations (normalized against `score-maximums.observation-words`). Color codes are stripped before counting words. |
-| **Science Tool Assessment** | Number of *unique* science tool types used per world this session | Diversity, not volume: tools are deduplicated per world (e.g. using `/temperature` ten times in one world counts once; using it in two different worlds counts twice). Counts are summed across worlds, then normalized against `score-maximums.science-tools`. |
+| **Observation Assessment** | Count, word count, and scientific quality heuristics | Three equally weighted thirds: observation count (`score-maximums.observation-count`), total words (`observation-words`), and a quality score (`observation-quality`) from per-observation bonuses. Quality rewards question marks, decimal numbers, percent signs, measurement units (auto-loaded from `plugins/WHIMC-ScienceTools/config.yml` plus `observation-quality.extra-units`), comparison language ("more than", "compared to"), causal language ("because", "therefore"), scientific vocabulary, multiple distinct numbers in one observation, and longer detailed observations. All bonuses are configurable under `observation-quality` in this plugin's config. |
+| **Science Tool Assessment** | Unique tools per world plus partial credit for repeated use | Each distinct tool used in a world earns `science-tools.unique-tool-points` (default 1.0). Every additional use of that same tool in the same world adds `science-tools.repeat-use-points` (default 0.25), capped at `science-tools.repeat-use-cap-per-tool` extra uses per tool (default 4). Summed across worlds, then normalized against `score-maximums.science-tools`. |
 | **Exploration Assessment** | Number of distinct map regions visited this session | Each world configured under `worlds:` in the config has its bundled map image (`resources/maps/<world>.png`) divided into a 10×10 grid. The player's logged positions are mapped onto that grid using the world's `pixel_to_block_ratio` and top-left coordinates, and each visited cell counts as 1 (summed across worlds, normalized against `score-maximums.exploration`). Positions outside the map bounds, or in worlds without config/map entries, are ignored. |
 | **POI Exploration Assessment** | Number of times the player dwelled near an NPC/POI this session | POI locations come from the `journey_waypoints` table. Using the session's time-ordered position log, each continuous stretch of at least 2 seconds spent within `poi-radius` blocks (default 5) of a waypoint counts as one dwell event; leaving and returning counts again. Normalized against `score-maximums.poi-exploration`. |
 | **Quest Assessment** | Number of quests started plus quests completed | Started quests come from `quests_player_currentquests` and completed quests from `quests_player_completedquests`. Normalized against `score-maximums.quests`. Note: both are queried by player UUID only, so this reflects all-time activity rather than the current session. |
@@ -41,6 +41,23 @@ Independent of the interest measures above, whenever a player makes an observati
 1. Cleans the observation text (strips colors/punctuation, lowercases) and classifies it with a bundled ML model (`model.pmml`) into one of: `analogy`, `comparative`, `descriptive`, `inference`, `factual`, `off topic`, `measurement mistake`.
 2. Marks the observation "correct" if the predicted type matches the type the student self-selected from the observation template (unlabeled observations are not scored either way).
 3. Updates the student's per-skill mastery estimate in `whimc_skills` using Bayesian Knowledge Tracing (BKT) with per-skill guess/slip/transfer parameters, then displays the updated open learner model (progress bars for Comparative, Descriptive, and Inference) plus written feedback.
+
+### Additional scientific quality signals (no LLM)
+
+Beyond the bundled PMML structure classifier, observation *interest* scoring uses local heuristics only — no API keys. Signals currently rewarded:
+
+- **Inquiry**: question marks (`?`)
+- **Quantitative reasoning**: decimal numbers, percents, multiple numbers in one observation
+- **Measurement literacy**: units from WHIMC-ScienceTools config (°C, m/s, psi, MeV, tool display names, etc.)
+- **Scientific discourse**: comparison words, causal connectives, domain vocabulary (atmosphere, gravity, hypothesis, …)
+- **Depth**: longer observations above a configurable length threshold
+- **Tool literacy**: naming a science tool from WHIMC-ScienceTools (tool keys, display names, aliases)
+- **Multi-world thinking**: session bonus when observations span multiple worlds
+- **Quantified units**: number and measurement unit appearing in the same sentence
+- **Cross-measurement reasoning**: two measurement concepts with two numbers and a connector ("while", "whereas", …) or multiple units
+- **Penalties**: very short observations and exact duplicate text in the same session
+
+Other heuristics you could add later without an LLM: pairing observations with quest progress, or weighting by observation category diversity from `whimc_observations.category`. The existing PMML model already handles observation *structure* (analogy vs inference, etc.) separately from this interest score.
 
 ### Tables Created by This Plugin
 
@@ -84,7 +101,12 @@ mysql:
 |`poi-radius`|`number`|Distance in blocks a player must be within of a `journey_waypoints` POI/NPC to count as "near" it (default 5)|
 |`score-maximums.observation-count`|`number`|Observations in a session worth a full 100 points|
 |`score-maximums.observation-words`|`number`|Total observation words in a session worth a full 100 points|
-|`score-maximums.science-tools`|`number`|Unique science tools (per world) worth a full 100 points|
+|`score-maximums.observation-quality`|`number`|Total observation quality bonus points worth a full 100 points|
+|`score-maximums.science-tools`|`number`|Weighted science tool points worth a full 100 points|
+|`science-tools.unique-tool-points`|`number`|Points for the first use of each tool per world|
+|`science-tools.repeat-use-points`|`number`|Points for each additional use of the same tool (same world)|
+|`science-tools.repeat-use-cap-per-tool`|`number`|Max repeat-use bonuses counted per tool per world|
+|`observation-quality.*`|`various`|Per-signal bonuses and word lists for scientific quality heuristics|
 |`score-maximums.exploration`|`number`|Visited map grid cells worth a full 100 points|
 |`score-maximums.poi-exploration`|`number`|POI dwell events worth a full 100 points|
 |`score-maximums.quests`|`number`|Quests started + completed worth a full 100 points|
